@@ -1,6 +1,6 @@
 {
   "name": "@howells/starlingcli",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "CLI for Starling Bank — balances, transactions, payees, standing orders. Agent-first: structured JSON output, multi-account, schema introspection.",
   "type": "module",
   "license": "MIT",
@@ -57,5 +57,8 @@
   },
   "engines": {
     "node": ">=20"
+  },
+  "dependencies": {
+    "@howells/cli": "^0.1.0"
   }
 }

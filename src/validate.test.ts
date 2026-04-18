@@ -1,19 +1,54 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("./output.ts", () => ({
-  error: (message: string, command?: string) => {
-    throw new Error(`[${command}] ${message}`);
-  },
-  success: () => {},
-  filterFields: (t: unknown[]) => t,
-}));
+vi.mock("@howells/cli", async () => {
+  const actual =
+    await vi.importActual<typeof import("@howells/cli")>("@howells/cli");
 
-import {
-  validateAccountName,
-  validateDate,
-  validateFields,
-  validatePositiveInt,
-} from "./validate.ts";
+  const throwError = (message: string, command?: string): never => {
+    throw new Error(`[${command}] ${message}`);
+  };
+
+  // Re-implement hardenId using our throwing error so tests can assert on the message.
+  function hardenId(
+    value: string,
+    command: string,
+    options: { maxLength?: number; label?: string } = {},
+  ): void {
+    const { maxLength = 128, label = "ID" } = options;
+
+    for (let i = 0; i < value.length; i++) {
+      if (value.charCodeAt(i) < 0x20) {
+        throwError(`Invalid ${label}: contains control characters.`, command);
+      }
+    }
+    if (value.includes("..") || value.includes("/") || value.includes("\\")) {
+      throwError(
+        `Invalid ${label}: contains path traversal characters.`,
+        command,
+      );
+    }
+    if (value.includes("%") || value.includes("?") || value.includes("#")) {
+      throwError(
+        `Invalid ${label}: contains encoded or query characters.`,
+        command,
+      );
+    }
+    if (value.length > maxLength) {
+      throwError(
+        `Invalid ${label}: too long (max ${maxLength} characters).`,
+        command,
+      );
+    }
+  }
+
+  return {
+    ...actual,
+    error: throwError,
+    hardenId,
+  };
+});
+
+import { validateAccountName, validateDate } from "./validate.ts";
 
 describe("validateDate", () => {
   it("accepts YYYY-MM-DD", () => {
@@ -71,43 +106,6 @@ describe("validateAccountName", () => {
   it("rejects overly long names", () => {
     expect(() => validateAccountName("a".repeat(65), "test")).toThrow(
       "too long",
-    );
-  });
-});
-
-describe("validatePositiveInt", () => {
-  it("accepts positive integers", () => {
-    expect(validatePositiveInt("5", "limit", "test")).toBe(5);
-    expect(validatePositiveInt("100", "limit", "test")).toBe(100);
-  });
-
-  it("rejects zero", () => {
-    expect(() => validatePositiveInt("0", "limit", "test")).toThrow("positive");
-  });
-
-  it("rejects negative", () => {
-    expect(() => validatePositiveInt("-1", "limit", "test")).toThrow(
-      "positive",
-    );
-  });
-
-  it("rejects non-numbers", () => {
-    expect(() => validatePositiveInt("abc", "limit", "test")).toThrow(
-      "positive",
-    );
-  });
-});
-
-describe("validateFields", () => {
-  it("accepts valid field names", () => {
-    expect(() =>
-      validateFields("amount,date,counterParty", "test"),
-    ).not.toThrow();
-  });
-
-  it("rejects fields with special characters", () => {
-    expect(() => validateFields("amount,../path", "test")).toThrow(
-      "alphanumeric",
     );
   });
 });

@@ -1,27 +1,16 @@
 #!/usr/bin/env node
 
+import { error, success } from "@howells/cli";
+import { flag, getLimit, readResult } from "@howells/cli/args";
 import {
   allAccounts,
   listConfiguredAccounts,
   resolveAccount,
 } from "./accounts.ts";
 import * as commands from "./commands.ts";
-import { error, filterFields, success } from "./output.ts";
-import {
-  validateAccountName,
-  validateDate,
-  validateFields,
-  validatePositiveInt,
-} from "./validate.ts";
+import { validateAccountName, validateDate } from "./validate.ts";
 
-const args = process.argv.slice(2);
-const command = args[0];
-
-function flag(name: string): string | undefined {
-  const idx = args.indexOf(`--${name}`);
-  if (idx === -1) return undefined;
-  return args[idx + 1];
-}
+const command = process.argv[2];
 
 function getToken(cmd: string): { name: string; token: string } {
   const acctName = flag("account");
@@ -31,30 +20,6 @@ function getToken(cmd: string): { name: string; token: string } {
   } catch (err) {
     error(err instanceof Error ? err.message : String(err), cmd);
   }
-}
-
-function getLimit(cmd: string): number | undefined {
-  const raw = flag("limit");
-  if (!raw) return undefined;
-  return validatePositiveInt(raw, "limit", cmd);
-}
-
-function getFields(cmd: string): string | undefined {
-  const raw = flag("fields");
-  if (!raw) return undefined;
-  validateFields(raw, cmd);
-  return raw;
-}
-
-/** Apply --fields and --limit to a result set. */
-function readResult(
-  cmd: string,
-  data: Record<string, unknown>[],
-  account?: string,
-): void {
-  const limited = getLimit(cmd) ? data.slice(0, getLimit(cmd)) : data;
-  const filtered = filterFields(limited, getFields(cmd));
-  success(filtered, cmd, account);
 }
 
 // --- Commands ---
@@ -67,10 +32,12 @@ switch (command) {
       const tokens = allAccounts();
       commands
         .allBalances(tokens)
-        .then((data) => success(data, "balance", "all"));
+        .then((data) => success(data, "balance", { account: "all" }));
     } else {
       const { name, token } = getToken("balance");
-      commands.balance(token).then((data) => success(data, "balance", name));
+      commands
+        .balance(token)
+        .then((data) => success(data, "balance", { account: name }));
     }
     break;
   }
@@ -85,7 +52,7 @@ switch (command) {
         readResult(
           "transactions",
           data as unknown as Record<string, unknown>[],
-          name,
+          { account: name },
         ),
       );
     break;
@@ -93,15 +60,11 @@ switch (command) {
 
   case "payees": {
     const { name, token } = getToken("payees");
-    commands
-      .payees(token)
-      .then((data) =>
-        readResult(
-          "payees",
-          data as unknown as Record<string, unknown>[],
-          name,
-        ),
-      );
+    commands.payees(token).then((data) =>
+      readResult("payees", data as unknown as Record<string, unknown>[], {
+        account: name,
+      }),
+    );
     break;
   }
 
@@ -113,7 +76,7 @@ switch (command) {
         readResult(
           "standing-orders",
           data as unknown as Record<string, unknown>[],
-          name,
+          { account: name },
         ),
       );
     break;
@@ -127,7 +90,7 @@ switch (command) {
         readResult(
           "direct-debits",
           data as unknown as Record<string, unknown>[],
-          name,
+          { account: name },
         ),
       );
     break;
@@ -135,15 +98,11 @@ switch (command) {
 
   case "savings": {
     const { name, token } = getToken("savings");
-    commands
-      .savingsGoals(token)
-      .then((data) =>
-        readResult(
-          "savings",
-          data as unknown as Record<string, unknown>[],
-          name,
-        ),
-      );
+    commands.savingsGoals(token).then((data) =>
+      readResult("savings", data as unknown as Record<string, unknown>[], {
+        account: name,
+      }),
+    );
     break;
   }
 
@@ -152,7 +111,9 @@ switch (command) {
     if (acctName) {
       validateAccountName(acctName, "accounts");
       const { name, token } = getToken("accounts");
-      commands.accounts(token).then((data) => success(data, "accounts", name));
+      commands
+        .accounts(token)
+        .then((data) => success(data, "accounts", { account: name }));
     } else {
       success(
         {
@@ -169,7 +130,7 @@ switch (command) {
     success(
       {
         cli: "starlingcli",
-        version: "0.2.0",
+        version: "0.3.0",
         description: "Agent-first CLI for Starling Bank",
         accounts: listConfiguredAccounts(),
         auth: "Set STARLING_<NAME>_TOKEN env vars (e.g. STARLING_PERSONAL_TOKEN). Name is derived from the env var.",
