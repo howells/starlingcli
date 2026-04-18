@@ -1,15 +1,15 @@
 {
-  "name": "@howells/starling",
-  "version": "0.1.0",
+  "name": "@howells/starlingcli",
+  "version": "0.2.0",
   "description": "CLI for Starling Bank — balances, transactions, payees, standing orders. Agent-first: structured JSON output, multi-account, schema introspection.",
   "type": "module",
   "license": "MIT",
   "author": "Daniel Howells <daniel.howells@gmail.com>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/howells/starling"
+    "url": "https://github.com/howells/starlingcli"
   },
-  "homepage": "https://github.com/howells/starling#readme",
+  "homepage": "https://github.com/howells/starlingcli#readme",
   "keywords": [
     "starling",
     "bank",
@@ -23,7 +23,7 @@
     "linux"
   ],
   "bin": {
-    "starling": "./dist/index.js"
+    "starlingcli": "./dist/index.js"
   },
   "files": [
     "dist",

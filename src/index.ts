@@ -7,6 +7,12 @@ import {
 } from "./accounts.ts";
 import * as commands from "./commands.ts";
 import { error, filterFields, success } from "./output.ts";
+import {
+  validateAccountName,
+  validateDate,
+  validateFields,
+  validatePositiveInt,
+} from "./validate.ts";
 
 const args = process.argv.slice(2);
 const command = args[0];
@@ -18,17 +24,46 @@ function flag(name: string): string | undefined {
 }
 
 function getToken(cmd: string): { name: string; token: string } {
+  const acctName = flag("account");
+  if (acctName && acctName !== "all") validateAccountName(acctName, cmd);
   try {
-    return resolveAccount(flag("account"));
+    return resolveAccount(acctName);
   } catch (err) {
     error(err instanceof Error ? err.message : String(err), cmd);
   }
 }
 
+function getLimit(cmd: string): number | undefined {
+  const raw = flag("limit");
+  if (!raw) return undefined;
+  return validatePositiveInt(raw, "limit", cmd);
+}
+
+function getFields(cmd: string): string | undefined {
+  const raw = flag("fields");
+  if (!raw) return undefined;
+  validateFields(raw, cmd);
+  return raw;
+}
+
+/** Apply --fields and --limit to a result set. */
+function readResult(
+  cmd: string,
+  data: Record<string, unknown>[],
+  account?: string,
+): void {
+  const limited = getLimit(cmd) ? data.slice(0, getLimit(cmd)) : data;
+  const filtered = filterFields(limited, getFields(cmd));
+  success(filtered, cmd, account);
+}
+
+// --- Commands ---
+
 switch (command) {
   case "balance": {
-    const acct = flag("account");
-    if (acct === "all" || (!acct && allAccounts().length > 1)) {
+    const acctName = flag("account");
+    if (acctName) validateAccountName(acctName, "balance");
+    if (acctName === "all" || (!acctName && allAccounts().length > 1)) {
       const tokens = allAccounts();
       commands
         .allBalances(tokens)
@@ -43,20 +78,30 @@ switch (command) {
   case "transactions": {
     const { name, token } = getToken("transactions");
     const since = flag("since");
-    const limit = flag("limit") ? Number(flag("limit")) : undefined;
-    commands.transactions(token, { since, limit }).then((data) => {
-      const filtered = filterFields(
-        data as unknown as Record<string, unknown>[],
-        flag("fields"),
+    if (since) validateDate(since, "since", "transactions");
+    commands
+      .transactions(token, { since, limit: getLimit("transactions") })
+      .then((data) =>
+        readResult(
+          "transactions",
+          data as unknown as Record<string, unknown>[],
+          name,
+        ),
       );
-      success(filtered, "transactions", name);
-    });
     break;
   }
 
   case "payees": {
     const { name, token } = getToken("payees");
-    commands.payees(token).then((data) => success(data, "payees", name));
+    commands
+      .payees(token)
+      .then((data) =>
+        readResult(
+          "payees",
+          data as unknown as Record<string, unknown>[],
+          name,
+        ),
+      );
     break;
   }
 
@@ -64,7 +109,13 @@ switch (command) {
     const { name, token } = getToken("standing-orders");
     commands
       .standingOrders(token)
-      .then((data) => success(data, "standing-orders", name));
+      .then((data) =>
+        readResult(
+          "standing-orders",
+          data as unknown as Record<string, unknown>[],
+          name,
+        ),
+      );
     break;
   }
 
@@ -72,26 +123,41 @@ switch (command) {
     const { name, token } = getToken("direct-debits");
     commands
       .directDebits(token)
-      .then((data) => success(data, "direct-debits", name));
+      .then((data) =>
+        readResult(
+          "direct-debits",
+          data as unknown as Record<string, unknown>[],
+          name,
+        ),
+      );
     break;
   }
 
   case "savings": {
     const { name, token } = getToken("savings");
-    commands.savingsGoals(token).then((data) => success(data, "savings", name));
+    commands
+      .savingsGoals(token)
+      .then((data) =>
+        readResult(
+          "savings",
+          data as unknown as Record<string, unknown>[],
+          name,
+        ),
+      );
     break;
   }
 
   case "accounts": {
-    const acct = flag("account");
-    if (acct) {
+    const acctName = flag("account");
+    if (acctName) {
+      validateAccountName(acctName, "accounts");
       const { name, token } = getToken("accounts");
       commands.accounts(token).then((data) => success(data, "accounts", name));
     } else {
       success(
         {
           configured: listConfiguredAccounts(),
-          note: "Use --account <name> to query a specific account",
+          note: "Use --account <name> to query sub-accounts for a specific account",
         },
         "accounts",
       );
@@ -102,48 +168,96 @@ switch (command) {
   case "schema":
     success(
       {
-        cli: "starling",
-        version: "0.1.0",
+        cli: "starlingcli",
+        version: "0.2.0",
+        description: "Agent-first CLI for Starling Bank",
         accounts: listConfiguredAccounts(),
+        auth: "Set STARLING_<NAME>_TOKEN env vars (e.g. STARLING_PERSONAL_TOKEN). Name is derived from the env var.",
         commands: {
           balance: {
             description: "Account balance (use --account all for all accounts)",
             params: {
-              account: {
-                type: "string",
-                description:
-                  "Account name from STARLING_<NAME>_TOKEN env vars, or 'all'",
-              },
+              account: { type: "string", description: "Account name or 'all'" },
             },
           },
           transactions: {
             description: "Recent transactions",
             params: {
-              account: { type: "string", required: true },
+              account: { type: "string" },
               since: {
                 type: "string",
-                format: "date-time",
-                description: "ISO 8601 (default: 7 days ago)",
+                format: "ISO 8601",
+                description: "Default: 7 days ago",
               },
-              limit: { type: "integer" },
-              fields: { type: "string" },
+              limit: { type: "integer", description: "Max results" },
+              fields: {
+                type: "string",
+                description: "Comma-separated field names",
+              },
             },
+            fields: [
+              "id",
+              "direction",
+              "amount",
+              "amountMinorUnits",
+              "counterParty",
+              "reference",
+              "date",
+              "status",
+              "category",
+            ],
           },
           payees: {
             description: "List payees",
-            params: { account: { type: "string" } },
+            params: {
+              account: { type: "string" },
+              fields: { type: "string" },
+              limit: { type: "integer" },
+            },
+            fields: ["id", "name", "type"],
           },
           "standing-orders": {
             description: "List standing orders",
-            params: { account: { type: "string" } },
+            params: {
+              account: { type: "string" },
+              fields: { type: "string" },
+              limit: { type: "integer" },
+            },
+            fields: [
+              "id",
+              "payee",
+              "amount",
+              "amountMinorUnits",
+              "reference",
+              "frequency",
+              "startDate",
+              "cancelled",
+            ],
           },
           "direct-debits": {
             description: "List direct debits",
-            params: { account: { type: "string" } },
+            params: {
+              account: { type: "string" },
+              fields: { type: "string" },
+              limit: { type: "integer" },
+            },
+            fields: [
+              "id",
+              "originator",
+              "reference",
+              "status",
+              "lastDate",
+              "lastAmount",
+            ],
           },
           savings: {
             description: "List savings goals",
-            params: { account: { type: "string" } },
+            params: {
+              account: { type: "string" },
+              fields: { type: "string" },
+              limit: { type: "integer" },
+            },
+            fields: ["id", "name", "target", "saved", "percentage", "state"],
           },
           accounts: {
             description: "List configured accounts or sub-accounts",
@@ -153,9 +267,10 @@ switch (command) {
         flags: {
           "--account":
             "Account name derived from STARLING_<NAME>_TOKEN env vars, or 'all'",
-          "--since": "ISO date for transactions (default: 7 days ago)",
-          "--limit": "Max results",
-          "--fields": "Comma-separated field names to return",
+          "--since": "ISO 8601 date for transactions (default: 7 days ago)",
+          "--limit": "Max results (positive integer)",
+          "--fields":
+            "Comma-separated field names to return (alphanumeric only)",
         },
       },
       "schema",
@@ -168,7 +283,7 @@ switch (command) {
     success(
       {
         usage:
-          "starling <command> [--account <name>|all] [--fields ...] [--limit N]",
+          "starlingcli <command> [--account <name>|all] [--fields ...] [--limit N]",
         commands: [
           "balance",
           "transactions",
@@ -181,8 +296,8 @@ switch (command) {
         ],
         flags: {
           "--account":
-            "Account name (default: first configured). Use 'all' for balances across all accounts.",
-          "--since": "ISO date for transactions (default: 7 days ago)",
+            "Account name (default: first configured). Use 'all' for all balances.",
+          "--since": "ISO 8601 date for transactions (default: 7 days ago)",
           "--limit": "Max results",
           "--fields": "Comma-separated field names to return",
         },
@@ -192,10 +307,10 @@ switch (command) {
     break;
 
   case undefined:
-    error("No command provided. Run 'starling help' for usage.");
+    error("No command provided. Run 'starlingcli help' for usage.");
     break;
 
   default:
-    error(`Unknown command: "${command}". Run 'starling help' for usage.`);
+    error(`Unknown command: "${command}". Run 'starlingcli help' for usage.`);
     break;
 }

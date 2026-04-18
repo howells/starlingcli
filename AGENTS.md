@@ -1,4 +1,4 @@
-# @howells/starling — Agent Guide
+# @howells/starlingcli — Agent Guide
 
 CLI for Starling Bank. Reads account data via the Starling API v2. Multi-account support via env vars.
 
@@ -6,13 +6,13 @@ CLI for Starling Bank. Reads account data via the Starling API v2. Multi-account
 
 ```bash
 # All balances across configured accounts
-starling balance --account all
+starlingcli balance --account all
 
 # Recent transactions with field filtering
-starling transactions --account personal --fields counterParty,amount,date --limit 10
+starlingcli transactions --account personal --fields counterParty,amount,date --limit 10
 
 # Schema introspection
-starling schema
+starlingcli schema
 ```
 
 ## Invariants
@@ -39,20 +39,20 @@ Available for `--fields`: `id`, `direction`, `amount`, `amountMinorUnits`, `coun
 
 ### Daily balance check
 ```bash
-starling balance --account all
+starlingcli balance --account all
 ```
 
 ### Recent spending
 ```bash
-starling transactions --account personal --fields counterParty,amount,direction,date --limit 20
+starlingcli transactions --account personal --fields counterParty,amount,direction,date --limit 20
 ```
 
 ### Monthly outgoings
 ```bash
-starling transactions --account business --since 2026-04-01 --fields counterParty,amount,direction
+starlingcli transactions --account business --since 2026-04-01 --fields counterParty,amount,direction
 ```
 
 ### Standing order audit
 ```bash
-starling standing-orders --account personal
+starlingcli standing-orders --account personal
 ```
