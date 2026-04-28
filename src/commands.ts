@@ -101,6 +101,24 @@ export async function allBalances(tokens: { name: string; token: string }[]) {
   return results;
 }
 
+/**
+ * Normalize a user-provided date/datetime into a full ISO 8601 timestamp
+ * that the Starling API accepts. The /feed `changesSince` parameter rejects
+ * bare dates like "2026-03-01" with a 404, so we coerce them to UTC midnight.
+ *
+ * Already-ISO datetimes pass through unchanged because `toISOString()` is
+ * idempotent for valid Date inputs.
+ */
+function toIsoTimestamp(value: string): string {
+  const ts = new Date(value).getTime();
+  if (Number.isNaN(ts)) {
+    throw new Error(
+      `Invalid date "${value}". Use ISO 8601 (YYYY-MM-DD or YYYY-MM-DDTHH:MM:SSZ).`,
+    );
+  }
+  return new Date(ts).toISOString();
+}
+
 export async function transactions(
   token: string,
   options: { since?: string; limit?: number } = {},
@@ -109,12 +127,13 @@ export async function transactions(
   const primary = accts.find((a) => a.accountType === "PRIMARY");
   if (!primary) throw new Error("No primary account found");
 
-  const since =
-    options.since ?? new Date(Date.now() - 7 * 86400000).toISOString();
+  const since = options.since
+    ? toIsoTimestamp(options.since)
+    : new Date(Date.now() - 7 * 86400000).toISOString();
 
   const res = await api<{ feedItems: FeedItem[] }>({
     token,
-    path: `/feed/account/${primary.accountUid}/category/${primary.defaultCategory}?changesSince=${since}`,
+    path: `/feed/account/${primary.accountUid}/category/${primary.defaultCategory}?changesSince=${encodeURIComponent(since)}`,
   });
 
   const items = res.feedItems.map((item) => ({

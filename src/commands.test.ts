@@ -174,6 +174,75 @@ describe("transactions", () => {
     const result = await commands.transactions("tok", { limit: 2 });
     expect(result).toHaveLength(2);
   });
+
+  it("normalizes a bare date to a full ISO 8601 timestamp in changesSince", async () => {
+    mockApi
+      .mockResolvedValueOnce({
+        accounts: [
+          {
+            accountUid: "uid-1",
+            accountType: "PRIMARY",
+            defaultCategory: "cat-1",
+            currency: "GBP",
+            createdAt: "",
+            name: "Personal",
+          },
+        ],
+      })
+      .mockResolvedValueOnce({ feedItems: [] });
+
+    await commands.transactions("tok", { since: "2026-03-01" });
+
+    const call = mockApi.mock.calls.at(-1)?.[0] as { path: string } | undefined;
+    expect(call?.path).toContain(
+      `changesSince=${encodeURIComponent("2026-03-01T00:00:00.000Z")}`,
+    );
+  });
+
+  it("preserves an already-ISO datetime in changesSince", async () => {
+    mockApi
+      .mockResolvedValueOnce({
+        accounts: [
+          {
+            accountUid: "uid-1",
+            accountType: "PRIMARY",
+            defaultCategory: "cat-1",
+            currency: "GBP",
+            createdAt: "",
+            name: "Personal",
+          },
+        ],
+      })
+      .mockResolvedValueOnce({ feedItems: [] });
+
+    await commands.transactions("tok", {
+      since: "2026-03-01T12:34:56.000Z",
+    });
+
+    const call = mockApi.mock.calls.at(-1)?.[0] as { path: string } | undefined;
+    expect(call?.path).toContain(
+      `changesSince=${encodeURIComponent("2026-03-01T12:34:56.000Z")}`,
+    );
+  });
+
+  it("throws a clear error for a non-date string", async () => {
+    mockApi.mockResolvedValueOnce({
+      accounts: [
+        {
+          accountUid: "uid-1",
+          accountType: "PRIMARY",
+          defaultCategory: "cat-1",
+          currency: "GBP",
+          createdAt: "",
+          name: "Personal",
+        },
+      ],
+    });
+
+    await expect(
+      commands.transactions("tok", { since: "yesterday" }),
+    ).rejects.toThrow(/Invalid date/);
+  });
 });
 
 describe("allBalances", () => {
