@@ -220,7 +220,7 @@ export async function savingsGoals(token: string) {
   return res.savingsGoalList.map((sg) => ({
     id: sg.savingsGoalUid,
     name: sg.name,
-    target: formatMoney(sg.target),
+    target: sg.target ? formatMoney(sg.target) : null,
     saved: formatMoney(sg.totalSaved),
     percentage: sg.savedPercentage,
     state: sg.state,
