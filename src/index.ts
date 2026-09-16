@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { error, success } from "@howells/cli";
-import { flag, getLimit, readResult } from "@howells/cli/args";
+import { flag, getFields, getLimit, readResult } from "@howells/cli/args";
 import {
   allAccounts,
   listConfiguredAccounts,
@@ -43,11 +43,19 @@ switch (command) {
   }
 
   case "transactions": {
-    const { name, token } = getToken("transactions");
+    // Validate the invocation before resolving an account. The shape of
+    // --since, --limit and --fields is knowable without a token, and checking
+    // it first means a typo is reported as a typo rather than as a missing
+    // account. --fields used to be validated inside readResult, which runs
+    // after the API call, so a malformed value cost a live request to find.
     const since = flag("since");
     if (since) validateDate(since, "since", "transactions");
+    const limit = getLimit("transactions");
+    getFields("transactions");
+
+    const { name, token } = getToken("transactions");
     commands
-      .transactions(token, { since, limit: getLimit("transactions") })
+      .transactions(token, { since, limit })
       .then((data) =>
         readResult(
           "transactions",

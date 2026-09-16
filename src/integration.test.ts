@@ -25,7 +25,15 @@ function run(args: string): {
   }
 }
 
-describe("read commands against live API", () => {
+// These call the live Starling API with a real account token. Nothing on a CI
+// runner has one, and nothing on a CI runner should: the publish gate must not
+// make requests against a bank. They run wherever a STARLING_<NAME>_TOKEN is
+// configured, which is the only place their assertions mean anything.
+const hasLiveAccount = Object.keys(process.env).some(
+  (key) => key.startsWith("STARLING_") && key.endsWith("_TOKEN"),
+);
+
+describe.skipIf(!hasLiveAccount)("read commands against live API", () => {
   it("balance returns structured data", () => {
     const result = run("balance --account personal");
     expect(result.ok).toBe(true);
