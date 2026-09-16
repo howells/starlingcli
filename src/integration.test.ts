@@ -29,9 +29,12 @@ function run(args: string): {
 // runner has one, and nothing on a CI runner should: the publish gate must not
 // make requests against a bank. They run wherever a STARLING_<NAME>_TOKEN is
 // configured, which is the only place their assertions mean anything.
-const hasLiveAccount = Object.keys(process.env).some(
-  (key) => key.startsWith("STARLING_") && key.endsWith("_TOKEN"),
-);
+// Specifically the personal account, because that is the one every assertion in
+// the block names, and specifically a non-empty value, because discoverAccounts
+// in accounts.ts skips an empty one. Matching any STARLING_*_TOKEN un-skipped
+// the block on a machine holding only a business token, where it could only
+// fail.
+const hasLiveAccount = Boolean(process.env.STARLING_PERSONAL_TOKEN);
 
 describe.skipIf(!hasLiveAccount)("read commands against live API", () => {
   it("balance returns structured data", () => {
