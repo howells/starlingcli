@@ -81,6 +81,14 @@ On error:
 - Multi-account via env var discovery (`STARLING_*_TOKEN`)
 - No dependencies beyond Node.js built-ins
 
+## Agent Skill
+
+The `starling` skill in [`skills/starling`](skills/starling/SKILL.md) tells a coding agent how to use this: it reads balances and transactions through this CLI, read-only.
+
+```bash
+npx skills@latest add howells/starlingcli --skill starling --global
+```
+
 ## License
 
 MIT

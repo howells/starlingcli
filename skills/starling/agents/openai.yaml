@@ -1,0 +1,4 @@
+interface:
+  display_name: "Starling Bank"
+  short_description: "Read Starling accounts with starlingcli"
+  default_prompt: "Use $starling to read my Starling Bank balances and transactions with starlingcli."
