@@ -2,6 +2,7 @@
 
 import { error, success } from "@howells/cli";
 import { flag, getFields, getLimit, readResult } from "@howells/cli/args";
+
 import {
   allAccounts,
   listConfiguredAccounts,
@@ -60,8 +61,8 @@ switch (command) {
         readResult(
           "transactions",
           data as unknown as Record<string, unknown>[],
-          { account: name },
-        ),
+          { account: name }
+        )
       );
     break;
   }
@@ -71,7 +72,7 @@ switch (command) {
     commands.payees(token).then((data) =>
       readResult("payees", data as unknown as Record<string, unknown>[], {
         account: name,
-      }),
+      })
     );
     break;
   }
@@ -84,8 +85,8 @@ switch (command) {
         readResult(
           "standing-orders",
           data as unknown as Record<string, unknown>[],
-          { account: name },
-        ),
+          { account: name }
+        )
       );
     break;
   }
@@ -98,8 +99,8 @@ switch (command) {
         readResult(
           "direct-debits",
           data as unknown as Record<string, unknown>[],
-          { account: name },
-        ),
+          { account: name }
+        )
       );
     break;
   }
@@ -109,7 +110,7 @@ switch (command) {
     commands.savingsGoals(token).then((data) =>
       readResult("savings", data as unknown as Record<string, unknown>[], {
         account: name,
-      }),
+      })
     );
     break;
   }
@@ -128,7 +129,7 @@ switch (command) {
           configured: listConfiguredAccounts(),
           note: "Use --account <name> to query sub-accounts for a specific account",
         },
-        "accounts",
+        "accounts"
       );
     }
     break;
@@ -242,7 +243,7 @@ switch (command) {
             "Comma-separated field names to return (alphanumeric only)",
         },
       },
-      "schema",
+      "schema"
     );
     break;
 
@@ -271,7 +272,7 @@ switch (command) {
           "--fields": "Comma-separated field names to return",
         },
       },
-      "help",
+      "help"
     );
     break;
 

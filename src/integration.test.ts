@@ -1,4 +1,5 @@
 import { execSync } from "node:child_process";
+
 import { describe, expect, it } from "vitest";
 
 const CLI = "npx tsx src/index.ts";
@@ -74,7 +75,7 @@ describe.skipIf(!hasLiveAccount)("read commands against live API", () => {
 
   it("transactions --fields filters output", () => {
     const result = run(
-      "transactions --account personal --limit 3 --fields counterParty,amount",
+      "transactions --account personal --limit 3 --fields counterParty,amount"
     );
     expect(result.ok).toBe(true);
     const data = result.data as Record<string, unknown>[];

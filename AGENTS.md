@@ -26,6 +26,7 @@ starlingcli schema
 ## Multi-Account
 
 Accounts are auto-discovered from env vars:
+
 - `STARLING_PERSONAL_TOKEN` → `--account personal`
 - `STARLING_BUSINESS_TOKEN` → `--account business`
 - `STARLING_JOINT_TOKEN` → `--account joint`
@@ -38,21 +39,25 @@ Available for `--fields`: `id`, `direction`, `amount`, `amountMinorUnits`, `coun
 ## Common Workflows
 
 ### Daily balance check
+
 ```bash
 starlingcli balance --account all
 ```
 
 ### Recent spending
+
 ```bash
 starlingcli transactions --account personal --fields counterParty,amount,direction,date --limit 20
 ```
 
 ### Monthly outgoings
+
 ```bash
 starlingcli transactions --account business --since 2026-04-01 --fields counterParty,amount,direction
 ```
 
 ### Standing order audit
+
 ```bash
 starlingcli standing-orders --account personal
 ```

@@ -47,13 +47,13 @@ export function resolveAccount(name: string | undefined): AccountConfig {
     const partial = accounts.find((a) => a.name.startsWith(key));
     if (partial) return partial;
     throw new Error(
-      `No account "${name}" found. Available: ${accounts.map((a) => a.name).join(", ") || "none"}. Set STARLING_<NAME>_TOKEN env vars.`,
+      `No account "${name}" found. Available: ${accounts.map((a) => a.name).join(", ") || "none"}. Set STARLING_<NAME>_TOKEN env vars.`
     );
   }
 
   if (accounts.length === 0) {
     throw new Error(
-      "No Starling tokens found. Set STARLING_<NAME>_TOKEN env vars (e.g. STARLING_PERSONAL_TOKEN).",
+      "No Starling tokens found. Set STARLING_<NAME>_TOKEN env vars (e.g. STARLING_PERSONAL_TOKEN)."
     );
   }
 
@@ -65,7 +65,7 @@ export function allAccounts(): AccountConfig[] {
   const accounts = discoverAccounts();
   if (accounts.length === 0) {
     throw new Error(
-      "No Starling tokens found. Set STARLING_<NAME>_TOKEN env vars.",
+      "No Starling tokens found. Set STARLING_<NAME>_TOKEN env vars."
     );
   }
   return accounts;

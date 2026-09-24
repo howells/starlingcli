@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { formatMoney } from "./api.ts";
 
 describe("formatMoney", () => {
@@ -12,7 +13,7 @@ describe("formatMoney", () => {
 
   it("formats large amounts", () => {
     expect(formatMoney({ currency: "GBP", minorUnits: 2500000 })).toBe(
-      "£25000.00",
+      "£25000.00"
     );
   });
 

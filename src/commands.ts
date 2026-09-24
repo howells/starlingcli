@@ -113,7 +113,7 @@ function toIsoTimestamp(value: string): string {
   const ts = new Date(value).getTime();
   if (Number.isNaN(ts)) {
     throw new Error(
-      `Invalid date "${value}". Use ISO 8601 (YYYY-MM-DD or YYYY-MM-DDTHH:MM:SSZ).`,
+      `Invalid date "${value}". Use ISO 8601 (YYYY-MM-DD or YYYY-MM-DDTHH:MM:SSZ).`
     );
   }
   return new Date(ts).toISOString();
@@ -121,7 +121,7 @@ function toIsoTimestamp(value: string): string {
 
 export async function transactions(
   token: string,
-  options: { since?: string; limit?: number } = {},
+  options: { since?: string; limit?: number } = {}
 ) {
   const accts = await accounts(token);
   const primary = accts.find((a) => a.accountType === "PRIMARY");

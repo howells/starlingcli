@@ -12,7 +12,7 @@ vi.mock("@howells/cli", async () => {
   function hardenId(
     value: string,
     command: string,
-    options: { maxLength?: number; label?: string } = {},
+    options: { maxLength?: number; label?: string } = {}
   ): void {
     const { maxLength = 128, label = "ID" } = options;
 
@@ -24,19 +24,19 @@ vi.mock("@howells/cli", async () => {
     if (value.includes("..") || value.includes("/") || value.includes("\\")) {
       throwError(
         `Invalid ${label}: contains path traversal characters.`,
-        command,
+        command
       );
     }
     if (value.includes("%") || value.includes("?") || value.includes("#")) {
       throwError(
         `Invalid ${label}: contains encoded or query characters.`,
-        command,
+        command
       );
     }
     if (value.length > maxLength) {
       throwError(
         `Invalid ${label}: too long (max ${maxLength} characters).`,
-        command,
+        command
       );
     }
   }
@@ -57,25 +57,25 @@ describe("validateDate", () => {
 
   it("accepts ISO datetime", () => {
     expect(() =>
-      validateDate("2026-04-18T10:00:00Z", "since", "test"),
+      validateDate("2026-04-18T10:00:00Z", "since", "test")
     ).not.toThrow();
   });
 
   it("rejects natural language", () => {
     expect(() => validateDate("last week", "since", "test")).toThrow(
-      "ISO 8601",
+      "ISO 8601"
     );
   });
 
   it("rejects path traversal", () => {
     expect(() => validateDate("../../etc", "since", "test")).toThrow(
-      "path traversal",
+      "path traversal"
     );
   });
 
   it("rejects control characters", () => {
     expect(() => validateDate("2026\x00-04-18", "since", "test")).toThrow(
-      "control characters",
+      "control characters"
     );
   });
 });
@@ -89,7 +89,7 @@ describe("validateAccountName", () => {
 
   it("rejects path traversal", () => {
     expect(() => validateAccountName("../etc", "test")).toThrow(
-      "path traversal",
+      "path traversal"
     );
   });
 
@@ -99,13 +99,13 @@ describe("validateAccountName", () => {
 
   it("rejects query params", () => {
     expect(() => validateAccountName("account?key=val", "test")).toThrow(
-      "query",
+      "query"
     );
   });
 
   it("rejects overly long names", () => {
     expect(() => validateAccountName("a".repeat(65), "test")).toThrow(
-      "too long",
+      "too long"
     );
   });
 });

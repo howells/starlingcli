@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+
 import { formatMoney } from "./api.ts";
 
 // Mock the api function to avoid hitting the real Starling API
@@ -195,7 +196,7 @@ describe("transactions", () => {
 
     const call = mockApi.mock.calls.at(-1)?.[0] as { path: string } | undefined;
     expect(call?.path).toContain(
-      `changesSince=${encodeURIComponent("2026-03-01T00:00:00.000Z")}`,
+      `changesSince=${encodeURIComponent("2026-03-01T00:00:00.000Z")}`
     );
   });
 
@@ -221,7 +222,7 @@ describe("transactions", () => {
 
     const call = mockApi.mock.calls.at(-1)?.[0] as { path: string } | undefined;
     expect(call?.path).toContain(
-      `changesSince=${encodeURIComponent("2026-03-01T12:34:56.000Z")}`,
+      `changesSince=${encodeURIComponent("2026-03-01T12:34:56.000Z")}`
     );
   });
 
@@ -240,7 +241,7 @@ describe("transactions", () => {
     });
 
     await expect(
-      commands.transactions("tok", { since: "yesterday" }),
+      commands.transactions("tok", { since: "yesterday" })
     ).rejects.toThrow(/Invalid date/);
   });
 });

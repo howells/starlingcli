@@ -17,7 +17,7 @@ function hasControlChars(value: string): boolean {
 export function validateDate(
   value: string,
   field: string,
-  command: string,
+  command: string
 ): void {
   if (hasControlChars(value)) {
     error(`Invalid ${field}: contains control characters.`, command);
@@ -28,7 +28,7 @@ export function validateDate(
   if (!ISO_DATE_PATTERN.test(value)) {
     error(
       `Invalid ${field}: "${value}". Must be ISO 8601 (YYYY-MM-DD or YYYY-MM-DDTHH:MM:SSZ).`,
-      command,
+      command
     );
   }
 }
